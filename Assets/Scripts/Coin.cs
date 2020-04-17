@@ -11,8 +11,6 @@ public class Coin : MonoBehaviour
     [SerializeField]
     private IntVariable _coinValue;
 
-    [SerializeField]
-    private BoolVariable _ghostVurnable;
 
     private AudioSource _audioPlayer;
 
@@ -29,7 +27,7 @@ public class Coin : MonoBehaviour
         {
             if(transform.parent.name.ToLower() == "powercoins")
             {
-                _ghostVurnable.Value = true;
+                LevelEvents.Current.PowerUpConsumed();
             }
             _audioPlayer.Play();
             _playerScore.Value += _coinValue.Value;

@@ -10,20 +10,33 @@ public class Player : MonoBehaviour
     private GameObject _startPosition;
     [SerializeField]
     private LevelStatusVariable _currentLevelStatus;
-    [SerializeField]
-    private BoolVariable _ghostVunrable;
-   
+
+    private bool _powerUpOn = false;
 
     private void Awake()
     {
+
+        LevelEvents.Current.OnPowerUpConsumed += Current_OnPowerUpConsumed;
+        LevelEvents.Current.OnPowerUpFinished += Current_OnPowerUpFinished;
+
         _playerHealth.CurrentHealth.Value = _playerHealth.MaxHealth.Value;
+    }
+
+    private void Current_OnPowerUpFinished()
+    {
+        _powerUpOn = false;
+    }
+
+    private void Current_OnPowerUpConsumed()
+    {
+        _powerUpOn = true;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if(collision.gameObject.name.ToLower().Contains("ghost"))
         {
-            if (!_ghostVunrable.Value)
+            if (!_powerUpOn)
             {
                 if (_playerHealth.CurrentHealth.Value > 0)
                 {
@@ -37,5 +50,13 @@ public class Player : MonoBehaviour
                 }
             }          
         }
+    }
+
+
+    private void OnDestroy()
+    {
+
+        LevelEvents.Current.OnPowerUpConsumed -= Current_OnPowerUpConsumed;
+        LevelEvents.Current.OnPowerUpFinished -= Current_OnPowerUpFinished;
     }
 }

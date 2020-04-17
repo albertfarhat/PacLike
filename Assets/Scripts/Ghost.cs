@@ -11,8 +11,6 @@ public class Ghost : MonoBehaviour
     private int _ghostId;
     [SerializeField]
     private LevelStatusVariable _currentLevelStatus;
-    [SerializeField]
-    private BoolVariable _ghostVunrable;
  
     [SerializeField]
     private GameObject _leftTopRayPoint;
@@ -49,7 +47,11 @@ public class Ghost : MonoBehaviour
 
     [SerializeField]
     private float _changeDirectionTime = 2.0f;
-    // public Transform Target { get; private set; }
+
+
+
+
+    private bool _vunrable = false;
 
 
     private Rigidbody2D _rigidBody;
@@ -60,6 +62,9 @@ public class Ghost : MonoBehaviour
 
     private void Awake()
     {
+        LevelEvents.Current.OnPowerUpConsumed += Current_OnPowerUpConsumed;
+        LevelEvents.Current.OnPowerUpFinished += Current_OnPowerUpFinished;
+
         _rigidBody = GetComponent<Rigidbody2D>();
         _sprite = GetComponentInChildren<SpriteRenderer>();
         _momventAi = new GhostMovementAI(_initialDirection,
@@ -74,6 +79,16 @@ public class Ghost : MonoBehaviour
         _initPosition = transform.position;      
     }
 
+    private void Current_OnPowerUpFinished()
+    {
+        _vunrable = false;
+    }
+
+    private void Current_OnPowerUpConsumed()
+    {
+        _vunrable = true;
+    }
+
     private void Stop(bool stop)
     {
         transform.transform.Translate(Vector3.zero);
@@ -82,11 +97,11 @@ public class Ghost : MonoBehaviour
     void Update()
     {
 
-        if (_ghostVunrable.Value && _sprite.color == Color.white)
+        if (_vunrable && _sprite.color == Color.white)
         {
             _sprite.color = new Color(0, 129, 190);
         }
-        else if (!_ghostVunrable.Value && _sprite.color != Color.white)
+        else if (!_vunrable && _sprite.color != Color.white)
         {
             _sprite.color = Color.white;
         }
@@ -114,19 +129,21 @@ public class Ghost : MonoBehaviour
             _bottomRightRayPoint.transform.position,
             _bottomLeftRayPoint.transform.position);
     }
-    //public void SetTarget(Transform target)
-    //{
-    //    Target = target;
-    //}
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
 
-        if (collision.gameObject.name == "Player" && _ghostVunrable.Value)
+        if (collision.gameObject.name == "Player" && _vunrable)
         {
             transform.position = _initPosition;
+            LevelEvents.Current.PowerUpFinished();
         }
     }
 
+    private void OnDestroy()
+    {
+        LevelEvents.Current.OnPowerUpConsumed -= Current_OnPowerUpConsumed;
+        LevelEvents.Current.OnPowerUpFinished -= Current_OnPowerUpFinished;
+    }
 
 }

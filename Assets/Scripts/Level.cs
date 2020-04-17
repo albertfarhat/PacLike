@@ -13,8 +13,6 @@ public class Level : MonoBehaviour
     [SerializeField]
     private LevelStatusVariable _currentLevelStatus;
 
-    [SerializeField]
-    private BoolVariable _ghostVunrable;
 
     [SerializeField]
     private float _vurnabilityTime = 1f;
@@ -26,14 +24,22 @@ public class Level : MonoBehaviour
     [SerializeField]
     private GameObject _powerConis;
 
-
+    private bool _startPowerUpTimer = false;
 
     // Start is called before the first frame update
     private void Awake()
     {
+        LevelEvents.Current.OnPowerUpConsumed += Current_OnPowerUpConsumed;
+        
         _currentLevelStatus.Value = LevelStatus.Started;
         _playerScore.Value = 0;
-        _ghostVunrable.Value = false;
+
+    }
+
+    private void Current_OnPowerUpConsumed()
+    {
+        _startPowerUpTimer = true;
+        _vurnabilityTimer = 0;
     }
 
     // Update is called once per frame
@@ -46,22 +52,32 @@ public class Level : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Space))
                 _currentLevelStatus.Value = LevelStatus.Started;
 
-        if (_ghostVunrable)
+
+        if (_startPowerUpTimer)
+            RunPowerUpTimer();
+    }
+
+    private void RunPowerUpTimer()
+    {
+        _vurnabilityTimer += Time.deltaTime;
+        if (_vurnabilityTimer > _vurnabilityTime)
         {
-            _vurnabilityTimer += Time.deltaTime;
-            if(_vurnabilityTimer > _vurnabilityTime)
-            {
-                _ghostVunrable.Value = false;
-                _vurnabilityTimer = 0;
-            }
+            _startPowerUpTimer = false;
+            LevelEvents.Current.PowerUpFinished();
+             _vurnabilityTimer = 0;
         }
-      
     }
 
     private bool IsLevelCompleted()
     {
-        return _coins.transform.childCount == 0 && _powerConis.transform.childCount == 0;
+        return _coins.transform.childCount == 0 
+            && _powerConis.transform.childCount == 0;
 
+    }
+
+    private void OnDestroy()
+    {
+        LevelEvents.Current.OnPowerUpConsumed -= Current_OnPowerUpConsumed;
     }
 }
 
